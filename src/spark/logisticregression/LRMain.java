@@ -139,10 +139,8 @@ public class LRMain {
         obtained from the 10 runs
          */
 
-
-
         deleteDirectory(new File(outputDir));
-        roc.toJavaRDD().saveAsTextFile(outputDir);
+        predictions.toJavaRDD().saveAsTextFile(outputDir);
 
     }
 }

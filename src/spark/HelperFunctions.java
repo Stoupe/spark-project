@@ -4,6 +4,12 @@ import java.io.File;
 
 public class HelperFunctions {
 
+    /**
+     * Recursively delete a directory and all files within
+     *
+     * thanks https://mkyong.com/java/how-to-delete-directory-in-java/
+     * @param file the directory to delete
+     */
     public static void deleteDirectory(File file) {
 
         File[] list = file.listFiles();
@@ -15,11 +21,11 @@ public class HelperFunctions {
             }
         }
 
-        if (file.delete()) {
-            System.out.printf("Delete : %s%n", file);
-        } else {
-            System.err.printf("Unable to delete file or directory : %s%n", file);
-        }
+//        if (file.delete()) {
+//            System.out.printf("Delete : %s%n", file);
+//        } else {
+//            System.err.printf("Unable to delete file or directory : %s%n", file);
+//        }
 
     }
 
