@@ -1,7 +1,5 @@
 package spark.logisticregression;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.spark.ml.classification.BinaryLogisticRegressionTrainingSummary;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
@@ -13,18 +11,14 @@ import org.apache.spark.sql.functions;
 
 import java.io.File;
 
-import static spark.HelperFunctions.createDatasetFromCSV;
-import static spark.HelperFunctions.deleteDirectory;
+import static spark.HelperFunctions.*;
 
 
 public class LRMain {
 
-
-
     public static void main(String[] args) {
 
-        Logger.getLogger("org").setLevel(Level.OFF);
-        Logger.getLogger("akka").setLevel(Level.OFF);
+        disableLogging();
 
         final String appName = "SparkLogisticRegression";
         final String inputDir = args[0];

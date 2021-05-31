@@ -1,7 +1,5 @@
 package spark.decisiontree;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -14,28 +12,24 @@ import org.apache.spark.sql.SparkSession;
 
 import java.io.File;
 
-import static spark.HelperFunctions.createDatasetFromCSV;
-import static spark.HelperFunctions.deleteDirectory;
+import static spark.HelperFunctions.*;
 
 
 public class DTMain {
 
-
     public static void main(String[] args){
 
-        Logger.getLogger("org").setLevel(Level.OFF);
-        Logger.getLogger("akka").setLevel(Level.OFF);
+        disableLogging();
 
-        String appName = "SparkWordCount";
+        String appName = "SparkDecisionTree";
         final String inputDir = args[0];
         final String outputDir = args[1];
         final int SEED = 123;
 
         SparkSession spark = SparkSession.builder()
                 .appName(appName)
-//                .master("local")
+                .master("local")
                 .getOrCreate();
-
 
         Dataset<Row> data = createDatasetFromCSV(spark, inputDir + "/kdd.data");
 
@@ -53,7 +47,7 @@ public class DTMain {
                 .setMaxCategories(4)
                 .fit(data);
 
-        Dataset<Row>[] splits = data.randomSplit(new double[]{0.7,0.3},123);
+        Dataset<Row>[] splits = data.randomSplit(new double[]{0.7,0.3},SEED);
         Dataset<Row> trainingData =splits[0];
         Dataset<Row> testData = splits[1];
 

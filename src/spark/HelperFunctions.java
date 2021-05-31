@@ -1,5 +1,7 @@
 package spark;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.feature.LabeledPoint;
 import org.apache.spark.ml.linalg.DenseVector;
@@ -11,6 +13,11 @@ import org.apache.spark.sql.SparkSession;
 import java.io.File;
 
 public class HelperFunctions {
+
+    public static void disableLogging() {
+        Logger.getLogger("org").setLevel(Level.OFF);
+        Logger.getLogger("akka").setLevel(Level.OFF);
+    }
 
     /**
      * Creates a spark dataset containing the data from an unlabelled CSV file.
