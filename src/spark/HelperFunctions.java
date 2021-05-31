@@ -60,16 +60,13 @@ public class HelperFunctions {
         if (list != null) {
             for (File temp : list) {
                 //recursive delete
-                System.out.println("Visit " + temp);
                 deleteDirectory(temp);
             }
         }
 
-//        if (file.delete()) {
-//            System.out.printf("Delete : %s%n", file);
-//        } else {
-//            System.err.printf("Unable to delete file or directory : %s%n", file);
-//        }
+        if (!file.delete()) {
+            System.err.printf("Unable to delete file or directory : %s%n", file);
+        }
 
     }
 
