@@ -1,23 +1,19 @@
 package spark.logisticregression;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.spark.ml.classification.BinaryLogisticRegressionTrainingSummary;
 import org.apache.spark.ml.classification.LogisticRegression;
 import org.apache.spark.ml.classification.LogisticRegressionModel;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
-import org.apache.spark.ml.feature.LabeledPoint;
-import org.apache.spark.ml.linalg.DenseVector;
-import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
-
 import java.io.File;
 
+import static spark.HelperFunctions.createDatasetFromCSV;
 import static spark.HelperFunctions.deleteDirectory;
 
 
@@ -41,26 +37,8 @@ public class LRMain {
 				.master("local")
                 .getOrCreate();
 
+        Dataset<Row> data = createDatasetFromCSV(spark, inputDir + "/kdd.data");
 
-        JavaRDD<String> lines = spark.sparkContext().textFile(inputDir + "/kdd.data",0).toJavaRDD();
-
-        JavaRDD<LabeledPoint> linesRDD = lines.map(line ->{
-            String[] tokens = line.split(",");
-            double[] features = new double[tokens.length - 1];
-            for (int i = 0; i < features.length; i++) {
-                features[i] = Double.parseDouble(tokens[i]);
-            }
-            Vector v = new DenseVector(features);
-
-            if(tokens[features.length].equals("anomaly")) {
-                return new LabeledPoint(0.0, v);
-            } else {
-                return new LabeledPoint(1.0, v);
-            }
-
-        });
-
-        Dataset<Row> data = spark.createDataFrame(linesRDD, LabeledPoint.class);
 
         data.show();
         System.out.println();

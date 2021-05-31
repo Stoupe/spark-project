@@ -2,21 +2,20 @@ package spark.decisiontree;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
-import org.apache.spark.ml.linalg.DenseVector;
-import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.File;
+
+import static spark.HelperFunctions.createDatasetFromCSV;
+import static spark.HelperFunctions.deleteDirectory;
 
 
 public class DTMain {
@@ -26,28 +25,20 @@ public class DTMain {
 
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
+
         String appName = "SparkWordCount";
+        final String inputDir = args[0];
+        final String outputDir = args[1];
+        final int SEED = 123;
 
         SparkSession spark = SparkSession.builder()
                 .appName(appName)
 //                .master("local")
                 .getOrCreate();
 
-        JavaRDD<String> lines = spark.sparkContext().textFile("input/kdd.data",0)
-                .toJavaRDD();
 
-        JavaRDD<LabeledPoint> linesRDD = lines.map(line -> {
-            String[]tokens = line.split(",");
-            double[]features = new double[tokens.length -1];
-            for (int i = 0; i < features.length; i++){
-                features[i] = Double.parseDouble(tokens[i]);}
-            Vector v = new DenseVector(features);
-            if(tokens[features.length].equals("anomaly")){
-                return new LabeledPoint(0.0, v);
-            } else {return new LabeledPoint(1.0, v); }
-        });
+        Dataset<Row> data = createDatasetFromCSV(spark, inputDir + "/kdd.data");
 
-        Dataset<Row> data = spark.createDataFrame(linesRDD, LabeledPoint.class);
 
         data.show();
 
@@ -112,20 +103,8 @@ public class DTMain {
 
         obtained from the 10 runs
          */
-        try {
-            String outputFile = "output.txt";
-            FileWriter myWriter = new FileWriter(outputFile);
-
-            myWriter.write("Files in Java might be tricky, but it is fun enough!");
-            myWriter.close();
-
-        } catch (IOException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-
-//        predictions.toJavaRDD().saveAsTextFile("output");
-
+        deleteDirectory(new File(outputDir));
+        predictions.toJavaRDD().saveAsTextFile(outputDir);
 
     }
 }

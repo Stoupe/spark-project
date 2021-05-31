@@ -1,8 +1,45 @@
 package spark;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.feature.LabeledPoint;
+import org.apache.spark.ml.linalg.DenseVector;
+import org.apache.spark.ml.linalg.Vector;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
 import java.io.File;
 
 public class HelperFunctions {
+
+    /**
+     * Creates a spark dataset containing the data from an unlabelled CSV file.
+     *
+     * @param spark - the current SparkSession
+     * @param filePath - path to the input CSV file
+     * @return a Dataset<Row> containing the CSV data
+     */
+    public static Dataset<Row> createDatasetFromCSV(SparkSession spark, String filePath) {
+        JavaRDD<String> lines = spark.sparkContext().textFile(filePath,0).toJavaRDD();
+
+        JavaRDD<LabeledPoint> linesRDD = lines.map(line ->{
+            String[] tokens = line.split(",");
+            double[] features = new double[tokens.length - 1];
+            for (int i = 0; i < features.length; i++) {
+                features[i] = Double.parseDouble(tokens[i]);
+            }
+            Vector v = new DenseVector(features);
+
+            if(tokens[features.length].equals("anomaly")) {
+                return new LabeledPoint(0.0, v);
+            } else {
+                return new LabeledPoint(1.0, v);
+            }
+
+        });
+
+        return spark.createDataFrame(linesRDD, LabeledPoint.class);
+    }
 
     /**
      * Recursively delete a directory and all files within
