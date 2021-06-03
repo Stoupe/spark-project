@@ -11,12 +11,43 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HelperFunctions {
+
+
 
     public static void disableLogging() {
         Logger.getLogger("org").setLevel(Level.OFF);
         Logger.getLogger("akka").setLevel(Level.OFF);
+
+    }
+
+    /**
+     * A function to calculate the sample standard deviation from a list of doubles
+     * https://www.programiz.com/java-programming/examples/standard-deviation
+     * @param values
+     * @return Sample standard deviation
+     */
+    public static double calculateSD(List<Double> values)
+    {
+        Double[] numArray = values.toArray(new Double[0]);
+
+        double sum = 0.0, standardDeviation = 0.0;
+        int length = numArray.length;
+
+        for(double num : numArray) {
+            sum += num;
+        }
+
+        double mean = sum/length;
+
+        for(double num: numArray) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+
+        return Math.sqrt(standardDeviation/(length-1));
     }
 
     /**

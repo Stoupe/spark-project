@@ -3,6 +3,7 @@ package spark.decisiontree;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.*;
@@ -33,7 +34,6 @@ public class DTMain {
 
         Dataset<Row> data = createDatasetFromCSV(spark, inputDir + "/kdd.data");
 
-
         data.show();
 
         StringIndexerModel labelIndexer = new StringIndexer()
@@ -53,7 +53,8 @@ public class DTMain {
 
         DecisionTreeClassifier dt = new DecisionTreeClassifier()
                 .setLabelCol("indexedLabel")
-                .setFeaturesCol("indexedFeatures");
+                .setFeaturesCol("indexedFeatures")
+                .setMaxDepth(10);
 
         IndexToString labelConverter = new IndexToString()
                 .setInputCol("prediction")
@@ -61,8 +62,12 @@ public class DTMain {
                 .setLabels(labelIndexer.labels());
 
         Pipeline pipeline = new Pipeline()
-                .setStages(new PipelineStage[]{labelIndexer, featureIndexer, dt,
-                        labelConverter});
+                .setStages(new PipelineStage[] {
+                        labelIndexer,
+                        featureIndexer,
+                        dt,
+                        labelConverter
+                });
 
         PipelineModel model = pipeline.fit(trainingData);
 
@@ -80,11 +85,16 @@ public class DTMain {
 
         System.out.println("Test Error = " + (1.0 - accuracy));
 
-//        DecisionTreeClassificationModel treeModel =
-//                (DecisionTreeClassificationModel) (model.stages()[2]);
-//
-//        System.out.println("Learned classification tree model:\n" +
-//                treeModel.toDebugString());
+        DecisionTreeClassificationModel treeModel =
+                (DecisionTreeClassificationModel) (model.stages()[2]);
+
+        System.out.println("Number of Features selected: " + treeModel.numFeatures());
+        System.out.println(treeModel.numClasses());
+        System.out.println(treeModel.featureImportances());
+
+
+        System.out.println("Learned classification tree model:\n" +
+                treeModel.toDebugString());
 
 
         /*
