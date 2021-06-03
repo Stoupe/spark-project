@@ -1,7 +1,5 @@
 package spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.feature.LabeledPoint;
 import org.apache.spark.ml.linalg.DenseVector;
@@ -10,18 +8,41 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HelperFunctions {
 
+    /**
+     * Calculates the min from a list of numbers
+     * @param list
+     * @param <T extends Number>
+     * @return
+     */
+    private static <T extends Number> double getMin(List<T> list) {
+        return list.stream().mapToDouble(Number::doubleValue).min().orElse(0);
+    }
 
+    /**
+     * Calculates the max from a list of numbers
+     * @param list
+     * @param <T extends Number>
+     * @return
+     */
+    private static <T extends Number> double getMax(List<T> list) {
+        return list.stream().mapToDouble(Number::doubleValue).max().orElse(0);
+    }
 
-    public static void disableLogging() {
-        Logger.getLogger("org").setLevel(Level.OFF);
-        Logger.getLogger("akka").setLevel(Level.OFF);
-
+    /**
+     * Calculates the average from a list of numbers
+     * @param list
+     * @param <T extends Number>
+     * @return
+     */
+    private static <T extends Number> double getAverage(List<T> list) {
+        return list.stream()
+                .mapToDouble(Number::doubleValue)
+                .average()
+                .orElse(0);
     }
 
     /**
@@ -30,7 +51,7 @@ public class HelperFunctions {
      * @param values
      * @return Sample standard deviation
      */
-    public static double calculateSD(List<Double> values)
+    private static double calculateSD(List<Double> values)
     {
         Double[] numArray = values.toArray(new Double[0]);
 
@@ -79,26 +100,83 @@ public class HelperFunctions {
         return spark.createDataFrame(linesRDD, LabeledPoint.class);
     }
 
-    /**
-     * Recursively delete a directory and all files within
-     *
-     * thanks https://mkyong.com/java/how-to-delete-directory-in-java/
-     * @param file the directory to delete
-     */
-    public static void deleteDirectory(File file) {
-
-        File[] list = file.listFiles();
-        if (list != null) {
-            for (File temp : list) {
-                //recursive delete
-                deleteDirectory(temp);
-            }
-        }
-
-        if (!file.delete()) {
-            System.err.printf("Unable to delete file or directory : %s%n", file);
-        }
-
+    private enum ResultType {
+        TRAINING,
+        TESTING,
+        TIMING
     }
+
+    private static void printResults(ResultType resultType, double average, double min, double max, double stdDev) {
+        System.out.println("\n");
+        System.out.println(resultType + ":");
+        System.out.println("Average: " + average);
+        System.out.println("Min: " + min);
+        System.out.println("Max: " + max);
+        if (stdDev != -1) {
+            System.out.println("Standard Deviation: " + stdDev);
+        }
+    }
+
+    public static void printAllResults(List<Double> trainAccuracies, List<Double> testAccuracies, List<Long> runningTimes) {
+
+        // TRAINING ACCURACY
+        double averageTrainAccuracy = getAverage(trainAccuracies);
+        double minTrainAccuracy = getMin(trainAccuracies);
+        double maxTrainAccuracy = getMax(trainAccuracies);
+        double trainingStandardDeviation = calculateSD(trainAccuracies);
+
+        // TESTING ACCURACY
+        double averageTestAccuracy = getAverage(testAccuracies);
+        double minTestAccuracy = getMin(testAccuracies);
+        double maxTestAccuracy = getMax(testAccuracies);
+        double testingStandardDeviation = calculateSD(testAccuracies);
+
+        // TIMING
+        double averageRunningTime = getAverage(runningTimes);
+        double minRunningTime = getMin(runningTimes);
+        double maxRunningTime = getMax(runningTimes);
+
+        System.out.println("\n\n=====================================================");
+
+        printResults(ResultType.TRAINING,
+                averageTrainAccuracy,
+                minTrainAccuracy,
+                maxTrainAccuracy,
+                trainingStandardDeviation);
+
+        printResults(ResultType.TESTING,
+                averageTestAccuracy,
+                minTestAccuracy,
+                maxTestAccuracy,
+                testingStandardDeviation);
+
+        printResults(ResultType.TIMING,
+                averageRunningTime,
+                minRunningTime,
+                maxRunningTime,
+                -1);
+    }
+
+//    /**
+//     * Recursively delete a directory and all files within
+//     *
+//     * thanks https://mkyong.com/java/how-to-delete-directory-in-java/
+//     * @param file the directory to delete
+//     */
+//    public static void deleteDirectory(File file) {
+//
+//        File[] list = file.listFiles();
+//        if (list != null) {
+//            for (File temp : list) {
+//                //recursive delete
+//                deleteDirectory(temp);
+//            }
+//        }
+//
+//        if (!file.delete()) {
+//            System.err.printf("Unable to delete file or directory : %s%n", file);
+//        }
+//
+//    }
 
 }

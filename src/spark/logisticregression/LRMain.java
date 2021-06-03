@@ -19,24 +19,20 @@ public class LRMain {
 
     public static void main(String[] args) {
 
-        disableLogging();
-
-        final String appName = "SparkLogisticRegression";
-        final String inputDir = args[0];
-        final String outputDir = args[1];
+        final String inputDir = args[0]; // Location of the data file
         final int NUM_ITERATIONS = 10;
 
         SparkSession spark = SparkSession
                 .builder()
-                .appName(appName)
-//				.master("local")
+                .appName("LogisticRegression")
+//				.master("local") //! Only for local dev
                 .getOrCreate();
 
+        spark.sparkContext().setLogLevel("ERROR");
+
         Dataset<Row> data = createDatasetFromCSV(spark, inputDir + "/kdd.data");
-
-        System.out.println("Data:");
+        System.out.println("Input Data:");
         data.show();
-
 
         List<Double> trainAccuracies = new ArrayList<>();
         List<Double> testAccuracies = new ArrayList<>();
@@ -46,7 +42,7 @@ public class LRMain {
             Instant startTime = Instant.now();
             int SEED = (i+1) * 100;
 
-            System.out.format("Iteration: %d - Seed: %d\n", i, SEED);
+            System.out.format("\nSeed: [%d] (iteration %d)\n", SEED, i+1);
 
             Dataset<Row>[] splits = data.randomSplit(new double[]{0.7,0.3}, SEED);
             Dataset<Row> training = splits[0];
@@ -83,12 +79,12 @@ public class LRMain {
 
 
             // Report loss per iteration of the training
-            double[] objectiveHistory = trainingSummary.objectiveHistory();
+//            double[] objectiveHistory = trainingSummary.objectiveHistory();
 //            for (double lossPerIteration : objectiveHistory) {
 //                System.out.println(lossPerIteration);
 //            }
 
-            System.out.format("[SEED: %d] - Training Accuracy: %f\n", SEED, trainingAccuracy);
+            System.out.format("Training Accuracy: %f\n", trainingAccuracy);
             trainAccuracies.add(trainingAccuracy);
 
 
@@ -112,6 +108,7 @@ public class LRMain {
                     .setMetricName("accuracy");
 
             double testAccuracy = evaluator.evaluate(predictions);
+            System.out.format("Test Accuracy: %f\n", testAccuracy);
             testAccuracies.add(testAccuracy);
 
             Instant endTime = Instant.now();
@@ -119,86 +116,8 @@ public class LRMain {
             runningTimes.add(timeElapsed);
         }
 
-
-        // TRAINING ACCURACY
-        double averageTrainAccuracy = trainAccuracies.stream()
-                                              .mapToDouble(i -> i)
-                                              .average()
-                                              .orElse(0);
-        double minTrainAccuracy = trainAccuracies.stream().mapToDouble(i -> i).min().orElse(0);
-        double maxTrainAccuracy = trainAccuracies.stream().mapToDouble(i -> i).max().orElse(0);
-        double trainingStandardDeviation = calculateSD(trainAccuracies);
-
-
-        // TESTING ACCURACY
-        double averageTestAccuracy = testAccuracies.stream()
-                                            .mapToDouble(i -> i)
-                                            .average()
-                                            .orElse(0);
-        double minTestAccuracy = testAccuracies.stream().mapToDouble(i -> i).min().orElse(0);
-        double maxTestAccuracy = testAccuracies.stream().mapToDouble(i -> i).max().orElse(0);
-        double testingStandardDeviation = calculateSD(testAccuracies);
-
-        // TIMING
-        double minRunningTime = runningTimes.stream().mapToLong(i -> i).min().orElse(0);
-        double maxRunningTime = runningTimes.stream().mapToLong(i -> i).max().orElse(0);
-        double averageRunningTime = runningTimes.stream().mapToLong(i -> i).average().orElse(0);
-
-
-
-        System.out.println("\n\n");
-        System.out.println("TRAINING:");
-        System.out.println("Average: " + averageTrainAccuracy);
-        System.out.println("Min: " + minTrainAccuracy);
-        System.out.println("Max: " + maxTrainAccuracy);
-        System.out.println("Standard Deviation: " + trainingStandardDeviation);
-//        System.out.println("All Accuracies: " + trainAccuracies);
-
-
-        System.out.println("\n");
-        System.out.println("TESTING:");
-        System.out.println("Average: " + averageTestAccuracy);
-        System.out.println("Min: " + minTestAccuracy);
-        System.out.println("Max: " + maxTestAccuracy);
-        System.out.println("Standard Deviation: " + testingStandardDeviation);
-//        System.out.println("All Accuracies: " + testAccuracies);
-
-
-        System.out.println("\n");
-        System.out.println("TIMING:");
-        System.out.println("Average: " + averageRunningTime);
-        System.out.println("Min: " + minRunningTime);
-        System.out.println("Max: " + maxRunningTime);
-
-
-
-
-
-
-
-
-
-
-
-        /*
-        Report for training and test accuracy:
-
-        max,
-        min,
-        average accuracy
-        standard deviation
-
-        obtained from the 10 runs
-         */
-
-//        System.out.println();
-
-//        deleteDirectory(new File(outputDir));
-//        predictions.toJavaRDD().saveAsTextFile(outputDir);
-
-//        predictions.write().mode(SaveMode.Overwrite).json(outputDir);
-
-
+        // Calculates and prints all results
+        printAllResults(trainAccuracies, testAccuracies, runningTimes);
 
     }
 }
