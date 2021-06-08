@@ -79,6 +79,7 @@ public class HelperFunctions {
      * @return a Dataset<Row> containing the CSV data
      */
     public static Dataset<Row> createDatasetFromCSV(SparkSession spark, String filePath) {
+
         JavaRDD<String> lines = spark.sparkContext().textFile(filePath,0).toJavaRDD();
 
         JavaRDD<LabeledPoint> linesRDD = lines.map(line ->{
@@ -156,27 +157,5 @@ public class HelperFunctions {
                 maxRunningTime,
                 -1);
     }
-
-//    /**
-//     * Recursively delete a directory and all files within
-//     *
-//     * thanks https://mkyong.com/java/how-to-delete-directory-in-java/
-//     * @param file the directory to delete
-//     */
-//    public static void deleteDirectory(File file) {
-//
-//        File[] list = file.listFiles();
-//        if (list != null) {
-//            for (File temp : list) {
-//                //recursive delete
-//                deleteDirectory(temp);
-//            }
-//        }
-//
-//        if (!file.delete()) {
-//            System.err.printf("Unable to delete file or directory : %s%n", file);
-//        }
-//
-//    }
 
 }
